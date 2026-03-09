@@ -85,13 +85,15 @@ export default function ScheduleGrid({
     return { day, dateStr, dayOfWeek, dateObj: d };
   });
 
-  // 管理者は月全体、閲覧者は週単位で表示
-  let visibleDates = allDates;
+  // 今日以降のみ表示（過去の日付は除外）
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const futureDates = allDates.filter(({ dateObj }) => dateObj >= today);
+
+  // 管理者は今日以降の月内全日、閲覧者は週単位で表示
+  let visibleDates = futureDates;
 
   if (!isAdmin) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
     // 初期表示: 今日〜翌週日曜日
     const initialDays = getDaysUntilNextSunday();
     const startDate = new Date(today);
@@ -99,16 +101,14 @@ export default function ScheduleGrid({
 
     let endDate: Date;
     if (weekOffset === 0) {
-      // 初期表示は翌週日曜まで
       endDate = new Date(today);
       endDate.setDate(endDate.getDate() + initialDays);
     } else {
-      // それ以降は1週間単位
       endDate = new Date(startDate);
       endDate.setDate(endDate.getDate() + 7);
     }
 
-    visibleDates = allDates.filter(({ dateObj }) => {
+    visibleDates = futureDates.filter(({ dateObj }) => {
       return dateObj >= (weekOffset === 0 ? today : startDate) && dateObj <= endDate;
     });
   }
